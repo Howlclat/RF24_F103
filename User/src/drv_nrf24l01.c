@@ -642,7 +642,7 @@ uint8_t NRF_TxPacket( uint8_t *txbuf, uint8_t Length )
 	
 	l_Status = NRF_Read_Status_Register();				//读状态寄存器
 	NRF_Write_Reg( STATUS, l_Status );					//清除TX_DS或MAX_RT中断标志
-	
+	NRF_SET_CE_LOW( );
 	if( l_Status & TX_OK )	//发送完成
 	{
 		return TX_OK;
@@ -699,7 +699,11 @@ void NRF_Init( void )
 	
     NRF_Write_Reg( SETUP_RETR, ARD_500US |
                         ( REPEAT_CNT & 0x0F ) );    //自动重发
-    
+	
+	NRF_Write_Reg( EN_AA,   ( 1 << ENAA_P0 ) );   	//打开自动应答
+    NRF_Write_Reg( FEATRUE, ( 1 << EN_DPL ) );		//使能动态数据长度				
+	NRF_Write_Reg( DYNPD,   ( 1 << DPL_P0 ) ); 		//使能通道0动态数据长度
+	
     NRF_Set_Speed( SPEED_250K );                    //空中速率250k
     NRF_Set_Power( POWER_0DBM );                    //发射功率0dBm
     
@@ -708,5 +712,5 @@ void NRF_Init( void )
 								  
     NRF_Set_Freq(0x6E);                             //通道（频率）
     
-    NRF_SET_CE_HIGH( );
+    //NRF_SET_CE_HIGH( );
 }
