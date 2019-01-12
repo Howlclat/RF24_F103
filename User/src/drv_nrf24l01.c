@@ -697,12 +697,12 @@ void NRF_Init( void )
 	
 	NRF_Write_Reg( SETUP_AW, AW_3BYTES );     		//地址宽度 3个字节
 	
-    NRF_Write_Reg( SETUP_RETR, ARD_500US |
+    NRF_Write_Reg( SETUP_RETR, ARD_1000US |
                         ( REPEAT_CNT & 0x0F ) );    //自动重发
 	
 	NRF_Write_Reg( EN_AA,   ( 1 << ENAA_P0 ) );   	//打开自动应答
-    NRF_Write_Reg( FEATRUE, ( 1 << EN_DPL ) );		//使能动态数据长度				
-	NRF_Write_Reg( DYNPD,   ( 1 << DPL_P0 ) ); 		//使能通道0动态数据长度
+    //NRF_Write_Reg( FEATRUE, ( 1 << EN_DPL ) );		//使能动态数据长度				
+	//NRF_Write_Reg( DYNPD,   ( 1 << DPL_P0 ) ); 		//使能通道0动态数据长度
 	
     NRF_Set_Speed( SPEED_250K );                    //空中速率250k
     NRF_Set_Power( POWER_0DBM );                    //发射功率0dBm

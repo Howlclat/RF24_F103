@@ -112,6 +112,9 @@ int main(void)
             {
                 case TX_OK:
                     printf("TX OK!\r\n");
+					observe = NRF_Read_Reg(OBSERVE_TX);
+					printf("reTransmit Count: %X\r\n", (observe & 0x0F));
+					printf("lost packets Count: %X\r\n", (observe & 0xF0 >> 4));
                     break;
                 case MAX_TX:
                     printf("MAX_TX\r\n");

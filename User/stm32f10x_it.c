@@ -189,7 +189,7 @@ void KEY2_IRQHandler(void)
 void DEBUG_USART_IRQHandler(void)
 {
 	uint8_t ucTemp;
-	if(USART_GetITStatus(DEBUG_USARTx,USART_IT_RXNE)!=RESET)
+	if( USART_GetITStatus(DEBUG_USARTx, USART_IT_RXNE) != RESET)
 	{
 		ucTemp = USART_ReceiveData(DEBUG_USARTx);
 		USART_SendData(DEBUG_USARTx,ucTemp);    
