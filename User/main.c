@@ -47,15 +47,24 @@ int main(void)
 	// 使用HSE时，SYSCLK = 8M * RCC_PLLMul_x, x:[2,3,...16],最高是128M
 	HSE_SetSysClock(RCC_PLLMul_9);  
 	
+	/* NVIC分组选择 */
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+	
 	// LED 端口初始化
 	LED_GPIO_Config();
     
     // 按键中断初始化
 	EXTI_Key_Config();
     
+	/* USART GPIO配置 */
+	USARTx_GPIO_Config();
+	
 	/* 初始化USART 配置模式为 115200 8-N-1，中断接收 */
-	USART_Config();
-
+	USART_Config(115200);
+		
+	/* 配置使用DMA模式 */
+	USARTx_DMA_Config();
+	
 	/* 发送一个字符串 */
     printf("NRF24L01 Test Program\r\n");
     

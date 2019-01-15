@@ -188,12 +188,36 @@ void KEY2_IRQHandler(void)
 // 串口中断服务函数
 void DEBUG_USART_IRQHandler(void)
 {
-	uint8_t ucTemp;
+	/*uint8_t ucTemp;
 	if( USART_GetITStatus(DEBUG_USARTx, USART_IT_RXNE) != RESET)
 	{
 		ucTemp = USART_ReceiveData(DEBUG_USARTx);
 		USART_SendData(DEBUG_USARTx,ucTemp);    
-	}
+	}*/
+	
+	/* 接收的数据长度 */
+	uint32_t buff_length;
+	
+	if(USART_GetITStatus(DEBUG_USARTx,USART_IT_IDLE)!=RESET)
+    {       
+		/* 暂时关闭dma，数据尚未处理  */
+		DMA_Cmd(USART_RX_DMA_CHANNEL, DISABLE);
+
+		/* 清DMA标志位 */
+		DMA_ClearFlag( DMA1_FLAG_TC5 );  
+
+		/* 获取接收到的数据长度 单位为字节*/
+		buff_length = USART_RX_BUFF_SIZE - DMA_GetCurrDataCounter(USART_RX_DMA_CHANNEL);
+
+		/* 重新赋值计数值，必须大于等于最大可能接收到的数据帧数目 */
+		USART_RX_DMA_CHANNEL->CNDTR = USART_RX_BUFF_SIZE;    
+
+		/* 此处应该在处理完数据再打开，如在 DataPack_Process() 打开*/
+		DMA_Cmd(USART_RX_DMA_CHANNEL, ENABLE);  
+		
+        /* 清除空闲中断标志位 */
+        USART_ReceiveData( DEBUG_USARTx );
+    }   
 }
 /**
   * @}
