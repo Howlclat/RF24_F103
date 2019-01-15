@@ -32,6 +32,8 @@ uint8_t txbuf1[5]={0xDF, 0x00, 0x25, 0x08, 0xA1};
 
 uint8_t addr[3] = {SET_ADDR};
 uint8_t addr1[3] = {DEF_ADDR};
+
+uint8_t g_UsartRxBuffer[100] = {0};
 /**
   * @brief  主函数
   * @param  无  
