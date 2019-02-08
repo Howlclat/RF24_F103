@@ -27,7 +27,7 @@ static void NVIC_USARTx_Configuration(void)
 
 	NVIC_InitStructure.NVIC_IRQChannel = DEBUG_USART_IRQ;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 }
@@ -43,8 +43,8 @@ static void NVIC_DMA_Configuration(void)
 	
 	//DMA发送中断设置
 	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel4_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 }
@@ -96,14 +96,18 @@ void USART_Config(uint32_t bandrate)
 	
 	// 串口中断优先级配置
 	NVIC_USARTx_Configuration();
-	// 串口中断
-	//USART_ITConfig(DEBUG_USARTx, USART_IT_RXNE, ENABLE);	
-	USART_ITConfig(DEBUG_USARTx, USART_IT_IDLE, ENABLE); 
 	
-	//采用DMA方式发送
-	USART_DMACmd(DEBUG_USARTx, USART_DMAReq_Tx, ENABLE);
+#ifdef USART_RX_DMA_ENABLE
+	// 使用空闲中断
+	USART_ITConfig(DEBUG_USARTx, USART_IT_IDLE, ENABLE); 
 	//采用DMA方式接收
 	USART_DMACmd(DEBUG_USARTx, USART_DMAReq_Rx, ENABLE);
+	USARTx_DMA_Config();
+#else
+	// 使用接收非空中断
+	USART_ITConfig(DEBUG_USARTx, USART_IT_RXNE, ENABLE);	
+#endif
+
 	// 使能串口
 	USART_Cmd(DEBUG_USARTx, ENABLE);	    
 }
@@ -120,7 +124,7 @@ void USARTx_DMA_Config(void)
 	// 开启DMA1时钟
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 	
-	// 串口TX DMA配置
+	/*// 串口TX DMA配置
 	// 设置DMA源地址：串口数据寄存器地址
 	DMA_InitStructure.DMA_PeripheralBaseAddr = USART_DR_ADDRESS;
 	// 内存地址(要传输的变量的指针)
@@ -149,8 +153,8 @@ void USARTx_DMA_Config(void)
 	// 使能DMA
 	//DMA_Cmd (USART_TX_DMA_CHANNEL, ENABLE);
 	// 配置DMA中断
-	DMA_ITConfig(USART_TX_DMA_CHANNEL, DMA_IT_TC, ENABLE);
-	
+	//DMA_ITConfig(USART_TX_DMA_CHANNEL, DMA_IT_TC, ENABLE);
+	*/
 	// 串口RX DMA配置  
 	// 设置DMA源地址：串口数据寄存器地址
 	DMA_InitStructure.DMA_PeripheralBaseAddr = USART_DR_ADDRESS;
@@ -176,6 +180,8 @@ void USARTx_DMA_Config(void)
 	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
 	// 配置DMA通道
 	DMA_Init(USART_RX_DMA_CHANNEL, &DMA_InitStructure);
+	
+	NVIC_DMA_Configuration();
 }
 
 /*****************  发送一个字节 **********************/

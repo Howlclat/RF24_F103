@@ -22,6 +22,7 @@
 #include "bsp_SysTick.h"
 #include "bsp_usart.h"
 #include "drv_nrf24l01.h"
+#include <stdbool.h>
 
 uint8_t KeyPressed = 0;
 uint8_t txbuf[5]={0x76, 0xAA, 0xAA, 0xAA, 0x0A};
@@ -32,6 +33,9 @@ uint8_t txbuf1[5]={0xDF, 0x00, 0x25, 0x08, 0xA1};
 
 uint8_t addr[3] = {SET_ADDR};
 uint8_t addr1[3] = {DEF_ADDR};
+
+bool serialIRQ = false;
+uint32_t buff_length = 0;
 
 uint8_t g_UsartRxBuffer[100] = {0};
 /**
@@ -87,6 +91,12 @@ int main(void)
 	
 	while (1)
 	{
+		if (serialIRQ)
+		{
+			serialIRQ = false;
+			printf("serial IRQ! data length:%d\n", buff_length);
+			DMA_Cmd(USART_RX_DMA_CHANNEL, ENABLE); 
+		}
         if (KeyPressed == 1)
         {
 			LED1_ON;

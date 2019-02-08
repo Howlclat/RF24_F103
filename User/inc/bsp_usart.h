@@ -29,6 +29,10 @@
 #define  DEBUG_USART_IRQ                USART1_IRQn
 #define  DEBUG_USART_IRQHandler         USART1_IRQHandler
 
+// 是否使用DMA
+//#define USART_TX_DMA_ENABLE
+#define USART_RX_DMA_ENABLE
+
 // 串口对应的DMA请求通道
 #define  USART_TX_DMA_CHANNEL     DMA1_Channel4
 #define  USART_RX_DMA_CHANNEL     DMA1_Channel5
