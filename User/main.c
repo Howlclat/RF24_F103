@@ -66,7 +66,7 @@ int main(void)
 	/* 初始化USART 配置模式为 115200 8-N-1，中断接收 */
 	USART_Config(115200);
 		
-	/* 配置使用DMA模式 */
+	/* USART配置使用DMA模式 */
 	USARTx_DMA_Config();
 	
 	/* 发送一个字符串 */
@@ -95,6 +95,8 @@ int main(void)
 		{
 			serialIRQ = false;
 			printf("serial IRQ! data length:%d\n", buff_length);
+			
+			/* 数据处理完成，重新打开DMA  */
 			DMA_Cmd(USART_RX_DMA_CHANNEL, ENABLE); 
 		}
         if (KeyPressed == 1)

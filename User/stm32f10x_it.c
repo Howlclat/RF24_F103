@@ -191,16 +191,16 @@ void KEY2_IRQHandler(void)
 // 串口中断服务函数
 void DEBUG_USART_IRQHandler(void)
 {
-	uint8_t ucTemp;
+	/*uint8_t ucTemp;
 	if( USART_GetITStatus(DEBUG_USARTx, USART_IT_RXNE) != RESET)
 	{
 		ucTemp = USART_ReceiveData(DEBUG_USARTx);
 		USART_SendData(DEBUG_USARTx,ucTemp);    
-	}
+	}*/
 	
 	if(USART_GetITStatus(DEBUG_USARTx,USART_IT_IDLE)!=RESET)
-    {       
-		/* 暂时关闭dma，数据尚未处理  */
+    {   
+		/* 暂时关闭DMA，数据尚未处理  */
 		DMA_Cmd(USART_RX_DMA_CHANNEL, DISABLE);
 
 		/* 清DMA标志位 */

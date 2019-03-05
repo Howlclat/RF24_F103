@@ -182,6 +182,8 @@ void USARTx_DMA_Config(void)
 	DMA_Init(USART_RX_DMA_CHANNEL, &DMA_InitStructure);
 	
 	NVIC_DMA_Configuration();
+	// 使能串口DMA接收
+	DMA_Cmd(USART_RX_DMA_CHANNEL, ENABLE);
 }
 
 /*****************  发送一个字节 **********************/
