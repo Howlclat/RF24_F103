@@ -58,12 +58,34 @@ void NRF_Gpio_Init( void )
     
     /* 配置NRF24L01的 CE引脚 */
     GPIO_InitStructure.GPIO_Pin = NRF_CE_PIN;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
     GPIO_Init(NRF_CE_PORT, &GPIO_InitStructure); 
 	
+	NRF_IRQ_Init();
+	
 	NRF_SET_CE_LOW( );		//使能设备
 	SPI_NRF_CS_HIGH( );		//取消SPI片选
+}
+
+void NRF_IRQ_Init( void )
+{
+	EXTI_InitTypeDef EXTI_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	GPIO_EXTILineConfig(NRF_INT_EXTI_PORTSOURCE, NRF_INT_EXTI_PINSOURCE); 
+	EXTI_InitStructure.EXTI_Line = NRF_INT_EXTI_LINE;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+	EXTI_ClearITPendingBit(NRF_INT_EXTI_LINE);
+	
+	NVIC_InitStructure.NVIC_IRQChannel = NRF_INT_EXTI_IRQ;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
 }
 
 /**
@@ -86,7 +108,7 @@ void SPI_NRF_Init( void )
     SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
     SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
     SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;
     SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
     SPI_InitStructure.SPI_CRCPolynomial = 7;
     SPI_Init(SPIx_NRF , &SPI_InitStructure);
@@ -128,9 +150,7 @@ uint8_t SPI_ReadWriteByte( uint8_t TxByte )
 uint8_t NRF_Write_Reg( uint8_t RegAddr, uint8_t Value )
 {
     uint8_t status;
-    
-    NRF_SET_CE_LOW( );      //CE置低
-    
+      
     SPI_NRF_CS_LOW( );		//片选
 	
     status = SPI_ReadWriteByte( NRF_WRITE_REG | RegAddr );	//写命令 地址
@@ -151,8 +171,6 @@ uint8_t NRF_Write_Reg( uint8_t RegAddr, uint8_t Value )
 uint8_t NRF_Read_Reg( uint8_t RegAddr )
 {
     uint8_t btmp;
-    
-    NRF_SET_CE_LOW( );      //CE置低
     
     SPI_NRF_CS_LOW( );			//片选
 
@@ -177,8 +195,6 @@ void NRF_Read_Buf( uint8_t RegAddr, uint8_t *pBuf, uint8_t len )
 {
     uint8_t i;
     
-    NRF_SET_CE_LOW( );      //CE置低
-	
     SPI_NRF_CS_LOW( );	    //片选
 	
     SPI_ReadWriteByte( NRF_READ_REG | RegAddr );	//读命令 地址
@@ -203,8 +219,6 @@ void NRF_Write_Buf( uint8_t RegAddr, uint8_t *pBuf, uint8_t len )
 {
     uint8_t i;
 	    
-    NRF_SET_CE_LOW( );      //CE置低
-    
     SPI_NRF_CS_LOW( );		//片选
 	
     SPI_ReadWriteByte( NRF_WRITE_REG | RegAddr );	//写命令 地址
@@ -473,7 +487,7 @@ void NRF_Set_TxAddr( uint8_t *pAddr, uint8_t len )
   * @brief :设置接收通道地址
   * @param :
   *			@PipeNum:通道
-  *			@pAddr:地址存肥着地址
+  *			@pAddr:地址存放地址
   *			@Len:长度
   * @note  :通道不大于5 地址长度不大于5个字节
   * @retval:无
@@ -484,6 +498,37 @@ void NRF_Set_RxAddr( uint8_t PipeNum, uint8_t *pAddr, uint8_t Len )
     PipeNum = ( PipeNum > 5 ) ? 5 : PipeNum;		    //通道不大于5 地址长度不大于5个字节
 
     NRF_Write_Buf( RX_ADDR_P0 + PipeNum, pAddr, Len );	//写入地址
+}
+
+ /**
+  * @brief :读取发送地址
+  * @param :
+  *			@pAddr:地址存放地址
+  *			@len:长度
+  * @note  :地址不能大于5个字节
+  * @retval:无
+  */
+void NRF_Get_TxAddr( uint8_t *pAddr, uint8_t len )
+{
+	len = ( len > 5 ) ? 5 : len;
+	NRF_Read_Buf( TX_ADDR, pAddr, len );
+}
+
+ /**
+  * @brief :设置接收通道地址
+  * @param :
+  *			@PipeNum:通道
+  *			@pAddr:地址存放地址
+  *			@Len:长度
+  * @note  :通道不大于5 地址长度不大于5个字节
+  * @retval:无
+  */
+void NRF_Get_RxAddr( uint8_t PipeNum, uint8_t *pAddr, uint8_t Len )
+{
+    Len = ( Len > 5 ) ? 5 : Len;
+    PipeNum = ( PipeNum > 5 ) ? 5 : PipeNum;
+
+    NRF_Read_Buf( RX_ADDR_P0 + PipeNum, pAddr, Len );
 }
 
  /**
@@ -668,9 +713,9 @@ uint8_t NRF_RxPacket( uint8_t *rxbuf )
 {
 	uint8_t l_Status = 0, l_RxLength = 0;
 	
-	NRF_Flush_Rx_FIFO();
+	//NRF_Flush_Rx_FIFO();
 	
-	while( 0 != NRF_GET_IRQ_STATUS( ));
+	//while( 0 != NRF_GET_IRQ_STATUS( ));
 	
 	l_Status = NRF_Read_Reg( STATUS );		//读状态寄存器
 	NRF_Write_Reg( STATUS,l_Status );		//清中断标志
@@ -711,6 +756,16 @@ void NRF_Init( void )
 						   ( 1 << PWR_UP ) );    	//开启设备
 								  
     NRF_Set_Freq(0x6E);                             //通道（频率）
-    
-    //NRF_SET_CE_HIGH( );
+	
+//	uint8_t addr[3] = {0x91,0xC0,0xA1};
+//	
+//	NRF_Set_TxAddr( addr, 3 );                     //设置TX地址
+//    NRF_Set_RxAddr( 0, addr, 3 );                  //设置RX地址
+//	NRF_Write_Reg( SETUP_AW, AW_3BYTES );
+//	NRF_Write_Reg( SETUP_RETR, 0x00 );
+//	NRF_Write_Reg( EN_AA, 0x00 );
+//	NRF_Write_Reg( EN_RXADDR, ( 1 << ERX_P0 ));		//通道0接收
+//	NRF_Write_Reg( RF_SETUP, 0x0E );
+//	NRF_Write_Reg( RX_PW_P0, 16 );					//固定数据长度 16
+//	NRF_Write_Reg( CONFIG, 0x0A );
 }

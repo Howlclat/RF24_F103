@@ -3,6 +3,25 @@
 
 #include "stm32f10x.h"
 #include <stdio.h>
+/*
+ * 野火开发板nRF24l01接口定义：
+ * CE	-	PG8
+ * IRQ	-	PC4
+ * CSN	-	PG15
+ * SCK	-	PA5
+ * MOSI	-	PA7
+ * MISO	-	PA6
+*/
+
+/*
+ * 闪光灯控制器nRF24l01接口定义：
+ * CE	-	PA3
+ * IRQ	-	PB0
+ * CSN	-	PA4
+ * SCK	-	PA5
+ * MOSI	-	PA7
+ * MISO	-	PA6
+*/
 
 /** 配置和选项定义 */
 #define DYNAMIC_PACKET      0				//1:动态数据包, 0:固定
@@ -10,13 +29,18 @@
 #define REPEAT_CNT          8				//自动重发次数
 
 /** RF24L01硬件IO定义 */
-#define NRF_CE_CLK              RCC_APB2Periph_GPIOG
-#define NRF_CE_PORT				GPIOG
-#define NRF_CE_PIN				GPIO_Pin_8
+#define NRF_CE_CLK              	RCC_APB2Periph_GPIOG
+#define NRF_CE_PORT					GPIOG
+#define NRF_CE_PIN					GPIO_Pin_8
 
-#define NRF_IRQ_CLK             RCC_APB2Periph_GPIOC
-#define NRF_IRQ_PORT			GPIOC
-#define NRF_IRQ_PIN				GPIO_Pin_4
+#define NRF_IRQ_CLK             	RCC_APB2Periph_GPIOC
+#define NRF_IRQ_PORT				GPIOC
+#define NRF_IRQ_PIN					GPIO_Pin_4
+#define NRF_INT_EXTI_PORTSOURCE   	GPIO_PortSourceGPIOC
+#define NRF_INT_EXTI_PINSOURCE    	GPIO_PinSource4
+#define NRF_INT_EXTI_LINE         	EXTI_Line4
+#define NRF_INT_EXTI_IRQ          	EXTI4_IRQn
+#define NRF_IRQHandler            	EXTI4_IRQHandler
 
 /** 口线操作函数定义 */
 #define NRF_SET_CE_HIGH( )			GPIO_SetBits( NRF_CE_PORT, NRF_CE_PIN )
@@ -228,7 +252,9 @@ void NRF_Write_Tx_Payload_Ack( uint8_t *pTxBuf, uint8_t len );
 void NRF_Write_Tx_Payload_NoAck( uint8_t *pTxBuf, uint8_t len );
 void NRF_Write_Tx_Payload_InAck( uint8_t *pData, uint8_t len );
 void NRF_Set_TxAddr( uint8_t *pAddr, uint8_t len );
+void NRF_Get_TxAddr( uint8_t *pAddr, uint8_t len );
 void NRF_Set_RxAddr( uint8_t PipeNum, uint8_t *pAddr, uint8_t Len );
+void NRF_Get_RxAddr( uint8_t PipeNum, uint8_t *pAddr, uint8_t Len );
 void NRF_Set_Speed( NRF_SpeedType Speed );
 void NRF_Set_Power( NRF_PowerType Power );
 void NRF_Set_Freq( uint8_t FreqPoint );
@@ -237,6 +263,7 @@ uint8_t NRF_check( void );
 uint8_t NRF_TxPacket( uint8_t *txbuf, uint8_t Length );
 uint8_t NRF_RxPacket( uint8_t *rxbuf );
 void NRF_Init( void );
+void NRF_IRQ_Init( void );
 
 #endif
 

@@ -28,11 +28,13 @@
 #include "bsp_led.h"
 #include "bsp_exti.h"
 #include "bsp_usart.h"
+#include "drv_nrf24l01.h"
 #include <stdbool.h>
 
 extern uint8_t KeyPressed;
 extern void TimingDelay_Decrement(void);
 extern bool serialIRQ;
+extern bool nRF_IRQ;
 extern uint32_t buff_length;
 
 /** @addtogroup STM32F10x_StdPeriph_Template
@@ -185,6 +187,15 @@ void KEY2_IRQHandler(void)
         
 		//清除中断标志位
 		EXTI_ClearITPendingBit(KEY2_INT_EXTI_LINE);
+	}
+}
+
+void NRF_IRQHandler(void)
+{
+	if(EXTI_GetITStatus(NRF_INT_EXTI_LINE) != RESET) 
+	{
+		nRF_IRQ = true;
+		EXTI_ClearITPendingBit(NRF_INT_EXTI_LINE);     
 	}
 }
 
